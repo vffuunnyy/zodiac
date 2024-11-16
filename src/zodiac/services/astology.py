@@ -28,7 +28,7 @@ solar_system_ephemeris.set("jpl")
 class AstroChart:
     def __init__(self, birth_date: str, birth_time: str, latitude: float, longitude: float):
         self.birth_time = datetime.strptime(
-            f"{self.birth_date} {self.birth_time} +0000", "%Y-%m-%d %H:%M %z"
+            f"{birth_date} {birth_time} +0000", "%Y-%m-%d %H:%M %z"
         )
         self.time = Time(self.birth_time)
         self.latitude = latitude
@@ -266,8 +266,9 @@ class AstroChart:
 
 
 if __name__ == "__main__":
-    astro_chart_1 = AstroChart("1990-01-01", "12:00", 40.7128, -74.0060)
-    astro_chart_2 = AstroChart("1990-01-01", "12:00", 40.7128, -74.0060)
+    astro_chart_1 = AstroChart("2002-05-25", "13:00", 56.484645, 84.947649)
+    astro_chart_3 = AstroChart("2002-03-23", "22:37", 56.484645, 84.947649)
+    astro_chart_2 = AstroChart("2002-02-02", "00:45", 56.204179, 95.706654)
     # astro_chart_2 = AstroChart("1992-05-03", "15:00", 34.0522, -118.2437)
 
     compatibility = astro_chart_1.calculate_compatibility(astro_chart_2)
