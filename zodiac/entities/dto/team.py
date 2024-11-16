@@ -1,8 +1,7 @@
-from pydantic import BaseModel
-
+from zodiac.entities.dto.base import BaseDto
 from zodiac.entities.dto.member import MemberDto
 
-class TeamDto(BaseModel):
+class TeamDto(BaseDto):
     id: str
     name: str
     description: str

@@ -129,7 +129,7 @@ class TeamsController(Controller):
             description=team.description,
             employees=employees,
             applicants=applicants,
-        ).model_dump())
+        ).model_dump(by_alias=True))
 
     @post("/teams/{team_id}/employees")
     @auth()

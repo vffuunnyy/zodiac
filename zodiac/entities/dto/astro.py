@@ -2,6 +2,8 @@ from enum import StrEnum
 
 from pydantic import BaseModel
 
+from zodiac.entities.dto.base import BaseDto
+
 
 class PlanetPosition(BaseModel):
     name: str
@@ -58,7 +60,7 @@ class LunarNode(BaseModel):
     element: str
 
 
-class PersonalTraits(BaseModel):
+class PersonalTraits(BaseDto):
     leadership: float  # Лидерство
     stress_resilience: float  # Стрессоустойчивость
     communication: float  # Коммуникабельность
@@ -66,7 +68,7 @@ class PersonalTraits(BaseModel):
     ambition: float  # Амбициозность
 
 
-class CompatibilityTraits(BaseModel):
+class CompatibilityTraits(BaseDto):
     emotional_compatibility: float  # Эмоциональная совместимость
     intellectual_compatibility: float  # Интеллектуальная совместимость
     goals_compatibility: float  # Совместимость целей
@@ -74,6 +76,6 @@ class CompatibilityTraits(BaseModel):
     decision_making_compatibility: float  # Совместимость в принятии решений
 
 
-class AstroData(BaseModel):
+class AstroData(BaseDto):
     personal_traits: PersonalTraits
     compatibility: CompatibilityTraits

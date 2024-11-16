@@ -1,7 +1,8 @@
-from pydantic import BaseModel
+
+from zodiac.entities.dto.base import BaseDto
 
 
-class Location(BaseModel):
+class Location(BaseDto):
     name: str
     latitude: float
     longitude: float
