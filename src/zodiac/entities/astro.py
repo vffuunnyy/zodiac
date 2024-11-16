@@ -62,3 +62,19 @@ class CompatibilityAspect(BaseModel):
     name: str
     score: float
     description: str
+    
+class PersonalTraits(BaseModel):
+    leadership: float  # Лидерство
+    stress_resilience: float  # Стрессоустойчивость
+    communication: float  # Коммуникабельность
+    responsibility: float  # Ответственность
+    ambition: float  # Амбициозность
+    
+
+class AstroData(BaseModel):
+    planet_positions: list[PlanetPosition]
+    house_positions: list[HousePosition]
+    aspects: list[Aspect]
+    lunar_node: LunarNode
+    compatibility_aspects: list[CompatibilityAspect] | None = None
+    personal_traits: PersonalTraits

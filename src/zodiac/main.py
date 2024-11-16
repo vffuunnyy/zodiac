@@ -4,7 +4,7 @@ from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams
 
 from zodiac.entities.astro import PlanetPosition
-from zodiac.entities.person import Profile
+from zodiac.entities.vector.person import Profile
 from zodiac.services.astology import AstroChart
 
 

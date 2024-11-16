@@ -15,9 +15,11 @@ from astropy.time import Time
 from zodiac.entities.astro import (
     ASPECT_RANGES,
     Aspect,
+    AspectName,
     CompatibilityAspect,
     HousePosition,
     LunarNode,
+    PersonalTraits,
     PlanetPosition,
 )
 
@@ -26,10 +28,8 @@ solar_system_ephemeris.set("jpl")
 
 
 class AstroChart:
-    def __init__(self, birth_date: str, birth_time: str, latitude: float, longitude: float):
-        self.birth_time = datetime.strptime(
-            f"{birth_date} {birth_time} +0000", "%Y-%m-%d %H:%M %z"
-        )
+    def __init__(self, birth_time: datetime, latitude: float, longitude: float):
+        self.birth_time = birth_time
         self.time = Time(self.birth_time)
         self.latitude = latitude
         self.longitude = longitude
@@ -123,7 +123,8 @@ class AstroChart:
             for p2 in self.planets[i + 1 :]:
                 angle = abs(p1.degree - p2.degree)
                 angle = angle if angle <= 180 else 360 - angle
-                aspect = self.determine_aspect(angle)
+                aspect, score = self.determine_aspect(angle)
+
                 if aspect:
                     aspects.append(
                         Aspect(
@@ -137,11 +138,12 @@ class AstroChart:
                     )
         return aspects
 
-    def determine_aspect(self, angle: float) -> str:
-        for (low, high), aspect, _ in ASPECT_RANGES:
+    def determine_aspect(self, angle: float) -> tuple[str, float]:
+        for (low, high), aspect_name, score in ASPECT_RANGES:
             if low <= angle <= high:
-                return aspect
-        return None
+                return aspect_name, score
+        return None, 0
+
 
     def calculate_lunar_nodes(self) -> LunarNode:
         sun = get_body("sun", self.time, self.location).transform_to(
@@ -246,30 +248,132 @@ class AstroChart:
         angle = abs(p1.degree - p2.degree)
         angle = angle if angle <= 180 else 360 - angle
 
-        aspect = self.determine_aspect(angle)
+        aspect, score = self.determine_aspect(angle)
         if not aspect:
             return 0.0
 
-        # Плавная шкала для аспекта, степень близости
-        max_angle = 180  # максимальное значение угла для аспектов
+        max_angle = 180
         distance_factor = 1 - (
             angle / max_angle
-        )  # Нормируем на диапазон [0, 1], где 1 - идеально совпадающий аспект
+        )
+        
+        return score * distance_factor
+    
+    def calculate_personal_traits(self) -> PersonalTraits:
+        traits = {
+            "leadership": 0,
+            "stress_resilience": 0,
+            "communication": 0,
+            "responsibility": 0,
+            "ambition": 0,
+        }
 
-        # Влияние аспекта на совместимость
-        for (low, high), aspect_name, score in ASPECT_RANGES:
-            if aspect == aspect_name and low <= angle <= high:
-                # Возвращаем плавный результат, учитывая степень близости аспекта
-                return score * distance_factor  # Умножаем на фактор близости
+        sun = next((p for p in self.planets if p.name.lower() == "sun"), None)
+        mars = next((p for p in self.planets if p.name.lower() == "mars"), None)
+        if sun:
+            traits["leadership"] += self.influence_score(sun.degree, ["Овен", "Лев", "Стрелец"], [1, 10])
+        if mars:
+            traits["leadership"] += self.influence_score(mars.degree, ["Овен", "Скорпион"], [1, 11])
 
-        return 0.0
+        saturn = next((p for p in self.planets if p.name.lower() == "saturn"), None)
+        if saturn:
+            traits["stress_resilience"] += self.influence_score(saturn.degree, ["Телец", "Дева", "Козерог"], [6, 10])
+
+        mercury = next((p for p in self.planets if p.name.lower() == "mercury"), None)
+        venus = next((p for p in self.planets if p.name.lower() == "venus"), None)
+        if mercury:
+            traits["communication"] += self.influence_score(mercury.degree, ["Близнецы", "Весы", "Водолей"], [3, 7])
+        if venus:
+            traits["communication"] += self.influence_score(venus.degree, ["Близнецы", "Весы"], [3, 7])
+
+        if saturn:
+            traits["responsibility"] += self.influence_score(saturn.degree, ["Козерог", "Дева"], [6, 10])
+
+        jupiter = next((p for p in self.planets if p.name.lower() == "jupiter"), None)
+        pluto = next((p for p in self.planets if p.name.lower() == "pluto"), None)
+        if jupiter:
+            traits["ambition"] += self.influence_score(jupiter.degree, ["Стрелец", "Лев"], [9, 10])
+        if pluto:
+            traits["ambition"] += self.influence_score(pluto.degree, ["Скорпион", "Козерог"], [8, 10])
+
+        for aspect in self.aspects:
+            if aspect.aspect in {AspectName.TRIN, AspectName.SOEDINENIE}:
+                traits["leadership"] += 5 if "sun" in {aspect.planet1, aspect.planet2} else 0
+                traits["communication"] += 5 if "mercury" in {aspect.planet1, aspect.planet2} else 0
+                traits["ambition"] += 5 if "mars" in {aspect.planet1, aspect.planet2} else 0
+            if aspect.aspect == AspectName.KVADRATURA:
+                traits["stress_resilience"] = max(0, traits["stress_resilience"] - 5)  # Минимум 0
+
+        traits = {k: max(0, v) for k, v in traits.items()}  # Не меньше 0
+
+        total = sum(traits.values())
+        if total > 0:
+            traits = {k: (v / total) * 100 for k, v in traits.items()}
+
+        return PersonalTraits(
+            leadership=traits["leadership"],
+            stress_resilience=traits["stress_resilience"],
+            communication=traits["communication"],
+            responsibility=traits["responsibility"],
+            ambition=traits["ambition"],
+        )
+
+        
+    def influence_score(self, degree: float, relevant_signs: list[str], houses: list[int], orb: float = 5.0) -> float:
+        """
+        Рассчитывает влияние планеты на основе положения в знаке, доме и аспектах.
+        
+        :param degree: Положение планеты в градусах (0–360).
+        :param relevant_signs: Знаки, которые усиливают влияние.
+        :param houses: Дома, которые усиливают влияние.
+        :param orb: Допустимая погрешность (орбис) для аспектов.
+        :return: Итоговый балл влияния.
+        """
+        score = 0
+
+        # Определяем знак и дом планеты
+        sign = self.get_zodiac_sign(degree)
+        house = self.get_house(degree)
+
+        if sign in relevant_signs:
+            score += 10
+
+        if house in houses:
+            score += 10
+
+        for aspect in self.aspects:
+            planet1 = next((p for p in self.planets if p.name.lower() == aspect.planet1.lower()), None)
+            planet2 = next((p for p in self.planets if p.name.lower() == aspect.planet2.lower()), None)
+
+            if not planet1 or not planet2:
+                continue
+
+            angle = abs(planet1.degree - planet2.degree)
+            angle = angle if angle <= 180 else 360 - angle
+            
+            for (low, high), aspect_name, aspect_score in ASPECT_RANGES:
+                if low - orb <= angle <= high + orb:
+                    score += aspect_score / 10
+                    break
+
+        elements = {"Огонь": 5, "Земля": 3, "Воздух": 4, "Вода": 2}
+        element = self.get_zodiac_element(degree)
+        if element in elements:
+            score += elements[element]
+
+        return score
+
 
 
 if __name__ == "__main__":
-    astro_chart_1 = AstroChart("2002-05-25", "13:00", 56.484645, 84.947649)
-    astro_chart_3 = AstroChart("2002-03-23", "22:37", 56.484645, 84.947649)
-    astro_chart_2 = AstroChart("2002-02-02", "00:45", 56.204179, 95.706654)
+    astro_chart_1 = AstroChart(datetime(2002, 5, 25, 13, 0), 56.484645, 84.947649)
+    # astro_chart_2 = AstroChart("2002-03-23", "22:37", 56.484645, 84.947649)
+    astro_chart_2 = AstroChart(datetime(2002,2,2, 0, 45), 56.204179, 95.706654)
     # astro_chart_2 = AstroChart("1992-05-03", "15:00", 34.0522, -118.2437)
+    
+    print("Personal traits:")
+    traits = astro_chart_1.calculate_personal_traits()
+    print(traits)
 
     compatibility = astro_chart_1.calculate_compatibility(astro_chart_2)
     for aspect in compatibility:

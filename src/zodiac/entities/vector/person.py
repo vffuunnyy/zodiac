@@ -42,7 +42,7 @@ class Profile(BaseModel):
 
     def get_sign_index(self, sign: str) -> int:
         """
-        Получаем индекс знака зодиака (0 - Овен, 1 - Телец и т.д.).
+        Получаем индекс знака зодиака
         """
         zodiac_signs = [
             "Овен",
@@ -71,7 +71,7 @@ class Profile(BaseModel):
 
     def get_lunar_node_score(self, element: str) -> float:
         """
-        Получаем значение элемента для лунного узла (Огонь, Земля, Воздух, Вода).
+        Получаем значение элемента для лунного узла
         """
         elements = {"Огонь": 0, "Земля": 1, "Воздух": 2, "Вода": 3}
         return elements.get(element, 0)
