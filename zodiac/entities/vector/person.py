@@ -5,7 +5,7 @@ import numpy as np
 
 from pydantic import BaseModel, Field
 
-from zodiac.entities.astro import ASPECT_RANGES, Aspect, LunarNode, PlanetPosition
+from zodiac.entities.dto.astro import ASPECT_RANGES, Aspect, LunarNode, PlanetPosition
 
 
 class Profile(BaseModel):
