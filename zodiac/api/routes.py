@@ -70,7 +70,7 @@ async def create_team(
     return TeamCreateResponse(success=True, id=str(team.id), message="Team created successfully")
 
 
-@teams_router.get("/", response_model=list[TeamDto])
+@teams_router.get("", response_model=list[TeamDto])
 async def list_teams(
     limit: int = 30,
     offset: int = 0,
