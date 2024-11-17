@@ -1,6 +1,6 @@
 from enum import StrEnum
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from zodiac.entities.dto.base import BaseDto
 
@@ -32,18 +32,17 @@ class AspectName(StrEnum):
 
 
 ASPECTS = [
-    {'name': AspectName.SOEDINENIE, 'angle': 0, 'orb': 8, 'score': 100.0},
-    {'name': AspectName.POLUSEXTIL, 'angle': 30, 'orb': 2, 'score': 20.0},
-    {'name': AspectName.POLUKVADRAT, 'angle': 45, 'orb': 2, 'score': 10.0},
-    {'name': AspectName.SEPTIL, 'angle': 51.43, 'orb': 1, 'score': 5.0},
-    {'name': AspectName.KVINTIL, 'angle': 72, 'orb': 2, 'score': 25.0},
-    {'name': AspectName.KVADRATURA, 'angle': 90, 'orb': 8, 'score': 50.0},
-    {'name': AspectName.TRIN, 'angle': 120, 'orb': 8, 'score': 80.0},
-    {'name': AspectName.BI_KVINTIL, 'angle': 144, 'orb': 2, 'score': 15.0},
-    {'name': AspectName.KVINKUNKS, 'angle': 150, 'orb': 2, 'score': 35.0},
-    {'name': AspectName.OPPOZICIYA, 'angle': 180, 'orb': 8, 'score': 70.0},
+    {"name": AspectName.SOEDINENIE, "angle": 0, "orb": 8, "score": 100.0},
+    {"name": AspectName.POLUSEXTIL, "angle": 30, "orb": 2, "score": 20.0},
+    {"name": AspectName.POLUKVADRAT, "angle": 45, "orb": 2, "score": 10.0},
+    {"name": AspectName.SEPTIL, "angle": 51.43, "orb": 1, "score": 5.0},
+    {"name": AspectName.KVINTIL, "angle": 72, "orb": 2, "score": 25.0},
+    {"name": AspectName.KVADRATURA, "angle": 90, "orb": 8, "score": 50.0},
+    {"name": AspectName.TRIN, "angle": 120, "orb": 8, "score": 80.0},
+    {"name": AspectName.BI_KVINTIL, "angle": 144, "orb": 2, "score": 15.0},
+    {"name": AspectName.KVINKUNKS, "angle": 150, "orb": 2, "score": 35.0},
+    {"name": AspectName.OPPOZICIYA, "angle": 180, "orb": 8, "score": 70.0},
 ]
-
 
 
 class Aspect(BaseModel):
@@ -69,13 +68,17 @@ class PersonalTraits(BaseDto):
 
 
 class CompatibilityTraits(BaseDto):
-    emotional_compatibility: float  # Эмоциональная совместимость
-    intellectual_compatibility: float  # Интеллектуальная совместимость
-    goals_compatibility: float  # Совместимость целей
-    problem_solving_compatibility: float  # Совместимость в решении проблем
-    decision_making_compatibility: float  # Совместимость в принятии решений
+    emotional: float  # Эмоциональная совместимость
+    intellectual: float  # Интеллектуальная совместимость
+    goals: float  # Совместимость целей
+    problem_solving: float  # Совместимость в решении проблем
+    decision_making: float  # Совместимость в принятии решений
+
+    mean_score: float = 0.0
 
 
-class AstroData(BaseDto):
-    personal_traits: PersonalTraits
-    compatibility: CompatibilityTraits
+class AstroShit(BaseDto):
+    planets: list[PlanetPosition] | None = None
+    houses: list[HousePosition] | None = None
+    personal_traits: PersonalTraits | None = None
+    compatibility: CompatibilityTraits | None = None

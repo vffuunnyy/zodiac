@@ -1,52 +1,52 @@
-# auth.py
-import jwt
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Optional
-from blacksheep.server.authentication import AuthenticationHandler
-from blacksheep.messages import Request
-from blacksheep.exceptions import Unauthorized
+
+import jwt
+
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
 from passlib.hash import bcrypt
+from pydantic import BaseModel, EmailStr
+
 from zodiac.config import JWT_ALGORITHM, JWT_SECRET_KEY
 from zodiac.entities.db.user import User
 
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
+class AuthRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+class AuthResponse(BaseModel):
+    success: bool
+    access_token: Optional[str] = None
+    token_type: str = "bearer"
+
 async def authenticate_user(email: str, password: str) -> Optional[User]:
     user = await User.find_one(User.email == email)
-    if user and bcrypt.verify(password, user.password_hash):
+    if user and bcrypt.verify(password, user.password):
         return user
     return None
 
 def create_access_token(user_id: str) -> str:
-    expire = datetime.now(timezone.utc) + timedelta(days=7)
+    expire = datetime.now(UTC) + timedelta(days=7)
     to_encode = {"exp": expire, "sub": user_id}
-    encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
-    return encoded_jwt
+    return jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
 
-class JWTAuthenticationHandler(AuthenticationHandler):
-    async def authenticate(self, context: Request):
-        auth_header = context.headers.get(b"Authorization")
-        if not auth_header:
-            return None  # No authentication provided
-
-        try:
-            auth_header_value = auth_header.decode()
-            scheme, _, token = auth_header_value.partition(' ')
-            if scheme.lower() != 'bearer':
-                raise Unauthorized("Invalid authentication scheme")
-
-            payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
-            user_id = payload.get("sub")
-            if not user_id:
-                raise Unauthorized("Invalid token payload")
-
-            user = await User.get(user_id)
-            if user:
-                # Set the identity on the request
-                context.identity = user
-                return user
-            else:
-                raise Unauthorized("User not found")
-        except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
-            raise Unauthorized("Invalid or expired token")
-
-# Instantiate the authentication handler
-jwt_authentication_handler = JWTAuthenticationHandler()
+async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+    )
+    try:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise credentials_exception
+    except jwt.PyJWTError:
+        raise credentials_exception
+    user = await User.get(user_id)
+    if user is None:
+        raise credentials_exception
+    return user

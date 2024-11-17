@@ -1,13 +1,56 @@
-version: '3.8'
-
 services:
-  qdrant:
-    image: qdrant/qdrant
-    container_name: qdrant
+  app:
+    build: .
+    restart: always
+    container_name: app
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    env_file:
+        - .env
     ports:
-      - "6333:6333"
-    volumes:
-      - qdrant_storage:/qdrant/storage
+        - "127.0.0.1:8000:8000"
+    depends_on:
+      - mongodb
 
-volumes:
-  qdrant_storage:
+  # qdrant:
+  #   image: qdrant/qdrant
+  #   container_name: qdrant
+  #   ports:
+  #     - "6333:6333"
+  #   volumes:
+  #     - qdrant_storage:/qdrant/storage
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./static:/static
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    ports:
+      - "127.0.0.1:27017:27017"
+
+# volumes:
+#   qdrant_storage:

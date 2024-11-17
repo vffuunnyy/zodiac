@@ -1,21 +1,16 @@
-from datetime import datetime
-from uuid import UUID, uuid4
-from beanie import BackLink, Document, Indexed
+from datetime import UTC, datetime
 
-from typing import TYPE_CHECKING, Optional
-
+from beanie import Document, Link
 from pydantic import Field
 
-from zodiac.entities.dto.astro import  PersonalTraits
-from zodiac.entities.enums.roles import Role
+from zodiac.entities.db.team import Team
+from zodiac.entities.dto.astro import PersonalTraits
 from zodiac.entities.dto.location import Location
-
-if TYPE_CHECKING:
-    from zodiac.entities.db.team import Team
+from zodiac.entities.enums.roles import Role
 
 
 class Employee(Document):
-    id: UUID = Field(default_factory=uuid4)
+    # id: UUID = Field(default_factory=uuid4)
     full_name: str
     birth_date: datetime
     birth_place: Location
@@ -23,7 +18,7 @@ class Employee(Document):
     phone: str
     position: str
     personal_traits: PersonalTraits
-    team: Optional[BackLink["Team"]]
+    team: Link[Team] | None = None
     role: Role = Role.PENDING
-    created_at: datetime
-    updated_at: datetime
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
