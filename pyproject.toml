@@ -3,6 +3,7 @@ name = "zodiac"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
+license = "MIT"
 authors = [{ name = "vffuunnyy", email = "vffuunnyy@gmail.com" }]
 requires-python = ">=3.12"
 dependencies = [
