@@ -149,9 +149,7 @@ async def add_employee(
     if not team:
         return AddMemberResponse(success=False, message="Team not found")
     place = data.birth_place.name
-    data.birth_place.latitude, data.birth_place.longitude = await get_coordinates_by_city_name(
-        place
-    )
+    data.birth_place.latitude, data.birth_place.longitude = get_coordinates_by_city_name(place)
 
     astro_chart = AstroChart(
         birth_time=data.birth_date,

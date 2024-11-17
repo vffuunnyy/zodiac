@@ -14,11 +14,17 @@ app = FastAPI(title="Astro API", version="0.0.1")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://sosiska.work",
+        "https://bubilda.sosiska.work",
+        "https://localhost:3000",
+        "http://localhost:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(teams_router, prefix="/api/v1")
