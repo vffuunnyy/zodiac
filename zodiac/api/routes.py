@@ -82,6 +82,8 @@ async def list_teams(
             id=str(team.id),
             name=team.name,
             description=team.description,
+            employees=[],
+            applicants=[],
         )
         for team in teams
     ]
